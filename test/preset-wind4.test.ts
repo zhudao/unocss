@@ -1268,6 +1268,54 @@ describe('preset-wind4', () => {
       .w-screen-sm{width:640px;}"
     `)
   })
+
+  it('gradient angles keep a single declaration terminator', async () => {
+    const uno = await createGenerator({
+      presets: [
+        presetWind4({
+          preflights: { reset: false, theme: false, property: false },
+        }),
+      ],
+    })
+
+    const { getLayer } = await uno.generate([
+      'bg-linear-45',
+      'bg-conic-90/srgb',
+      '!bg-linear-30',
+    ])
+
+    expect(getLayer('default')).toMatchInlineSnapshot(`
+      "/* layer: default */
+      .\\!bg-linear-30{--un-gradient-position:30deg in oklab !important;background-image:linear-gradient(var(--un-gradient-stops)) !important;}
+      .bg-conic-90\\/srgb{--un-gradient-position:from 90deg in srgb;background-image:conic-gradient(var(--un-gradient-stops));}
+      .bg-linear-45{--un-gradient-position:45deg in oklab;background-image:linear-gradient(var(--un-gradient-stops));}"
+    `)
+  })
+
+  it('radial gradients take a bracket position, not an angle', async () => {
+    const uno = await createGenerator({
+      presets: [
+        presetWind4({
+          preflights: { reset: false, theme: false, property: false },
+        }),
+      ],
+    })
+
+    const { matched, getLayer } = await uno.generate([
+      'bg-radial-30',
+      'bg-radial-45/srgb',
+      '!bg-radial-30',
+      'bg-radial',
+      'bg-radial-[at_50%_75%]',
+    ])
+
+    expect([...matched].sort()).toEqual(['bg-radial', 'bg-radial-[at_50%_75%]'])
+    expect(getLayer('default')).toMatchInlineSnapshot(`
+      "/* layer: default */
+      .bg-radial-\\[at_50\\%_75\\%\\]{--un-gradient-position:at 50% 75%;background-image:radial-gradient(var(--un-gradient-stops));}
+      .bg-radial{--un-gradient-position: in oklab;background-image:radial-gradient(var(--un-gradient-stops));}"
+    `)
+  })
 })
 
 describe('important', () => {
